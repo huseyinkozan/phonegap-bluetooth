@@ -101,9 +101,27 @@ application which uses old [BluetoothPlugin], you must migrate to new API functi
     </tr>
     <tr>
          <td>listen()</td>
-         <td>Planned</td>
-         <td>-</td>
+         <td>Yes</td>
+         <td>5</td>
          <td>Listens incoming connections</td>
+    </tr>
+    <tr>
+         <td>stopListening()</td>
+         <td>Yes</td>
+         <td>5</td>
+         <td>Stops listening incoming connections</td>
+    </tr>
+    <tr>
+         <td>listenInsecure()</td>
+         <td>Yes</td>
+         <td>10</td>
+         <td>Listens incoming insecure connections</td>
+    </tr>
+    <tr>
+         <td>stopInsecureListening()</td>
+         <td>Yes</td>
+         <td>10</td>
+         <td>Stops listening incoming insecure connections</td>
     </tr>
     <tr>
          <td>read()</td>
