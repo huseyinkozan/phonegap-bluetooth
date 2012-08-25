@@ -132,8 +132,8 @@ src/org/apache/cordova/plugin/BluetoothPlugin.java
 > **Tip:** You can just copy folders and paste it into the project with right click in Eclipse.
 
 > If you want to run example index.html you also need these files :
-> > assets/www/jquery-1.8.0.js
-> > assets/www/cordova-2.0.0.js
+>> assets/www/jquery-1.8.0.js <br>
+>> assets/www/cordova-2.0.0.js
 
 Before using the Bluetooth plugin, you must do some changes on Phonegap project.
 
