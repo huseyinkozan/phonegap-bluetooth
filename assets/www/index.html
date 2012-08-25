@@ -226,14 +226,49 @@ function disconnect() {
 function listen() {
 	setStatus("Listening incoming connections ...");
 	g_bluetoothPlugin.listen(
-			function(){
-				setStatus("Connected");
+			function(socketId){
+				setStatus("Connected socket:" + socketId);
 			},
 			function(error){
-				setStatus("Error while disconnecting : " + error)
+				setStatus("Error while listening : " + error)
 			},
 			"Serice Name",
 			"e7babb53-0160-4192-a2b6-2ccb1e9aae67");
+}
+
+function stopListening() {
+	setStatus("Stopping to listen the incoming connections ...");
+	g_bluetoothPlugin.stopListening(
+			function(){
+				setStatus("Listening stopped");
+			},
+			function(error){
+				setStatus("Error while stopping the listening : " + error)
+			});
+}
+
+function listenInsecure() {
+	setStatus("Listening incoming insecure connections ...");
+	g_bluetoothPlugin.listenInsecure(
+			function(socketId){
+				setStatus("Connected insecure socket:" + socketId);
+			},
+			function(error){
+				setStatus("Error while listening : " + error)
+			},
+			"Insecure Serice Name",
+			"e7babb53-0160-4192-a2b6-2ccb1e9aae68");
+}
+
+function stopInsecureListening() {
+	setStatus("Stopping to listen the incoming insecure connections ...");
+	g_bluetoothPlugin.stopInsecureListening(
+			function(){
+				setStatus("Insecure Listening stopped");
+			},
+			function(error){
+				setStatus("Error while stopping the insecure listening : " + error)
+			});
 }
 
 // min api 10 
@@ -267,7 +302,7 @@ function writeDevice() {
 			[10,20,30,40,50]);
 }
 
-function init() {
+function onload() {
 	document.addEventListener("deviceready", function() {
 		g_bluetoothPlugin = cordova.require( 'cordova/plugin/bluetooth' );
 		g_bluetoothPlugin.isSupported(
@@ -291,7 +326,7 @@ function setStatus(msg) {
 
 </head>
 
-  <body onload="init();" id="stage" class="theme">
+  <body onload="onload();" id="stage" class="theme">
   
        <div id="status"></div>
        
@@ -326,7 +361,11 @@ function setStatus(msg) {
        
        <a href="#" class="btn large" onclick="disconnect();">disconnect()</a>
        
-       <a href="#" class="btn large" onclick="listen();">listen() (not implemented)</a>
+       <a href="#" class="btn large" onclick="listen();">listen()</a>
+       <a href="#" class="btn large" onclick="stopListening();">stopListening()</a>
+       
+       <a href="#" class="btn large" onclick="listenInsecure();">listenInsecure() (SDK>=10)</a>
+       <a href="#" class="btn large" onclick="stopInsecureListening();">stopInsecureListening() (SDK>=10)</a>
        
        <a href="#" class="btn large" onclick="readDevice();">read()</a>
        <a href="#" class="btn large" onclick="writeDevice();">write()</a>

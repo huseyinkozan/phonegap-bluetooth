@@ -17,7 +17,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
  */
-
+ 
 package org.apache.cordova.plugin;
 
 import org.apache.cordova.api.CordovaInterface;
@@ -41,6 +41,7 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -65,11 +66,15 @@ public class BluetoothPlugin extends Plugin {
 	private static final String ACTION_CONNECT = 				"connect";
 	private static final String ACTION_DISCONNECT = 			"disconnect";
 	private static final String ACTION_LISTEN = 				"listen";
+	private static final String ACTION_STOP_LISTENING =		"stopListening";
 	private static final String ACTION_READ = 				"read";
 	private static final String ACTION_WRITE = 				"write";
 	
 	// min api 10 {
 	private static final String ACTION_CONNECTINSECURE = 		"connectInsecure";
+	private static final String ACTION_LISTENINSECURE =		"listenInsecure";
+	private static final String ACTION_STOP_INSECURELISTENING="stopInsecureListening";
+	public String callback_listenInsecure = null;
 	// }
 	
 	// min api 15 {
@@ -96,6 +101,9 @@ public class BluetoothPlugin extends Plugin {
 	
 	private ArrayList<BluetoothSocket> m_bluetoothSockets = new ArrayList<BluetoothSocket>();
 	private JSONArray m_discoveredDevices = null;
+	
+	private ListenThread m_listenThread = null;
+	private ListenInsecureThread m_listenInsecureThread = null;
 	
 
 	/**
@@ -140,8 +148,16 @@ public class BluetoothPlugin extends Plugin {
 	
 	@Override
 	public void onDestroy() {
-		this.cordova.getActivity().unregisterReceiver(m_bpBroadcastReceiver);
 		super.onDestroy();
+		if (m_listenThread != null)
+			m_listenThread.cancel();
+		m_listenThread = null;
+		if (m_listenInsecureThread != null)
+			m_listenInsecureThread.cancel();
+		m_listenInsecureThread = null;
+		if ( m_bluetoothAdapter != null )
+			m_bluetoothAdapter.cancelDiscovery();
+		this.cordova.getActivity().unregisterReceiver(m_bpBroadcastReceiver);
 	}
 
 	/**
@@ -267,6 +283,25 @@ public class BluetoothPlugin extends Plugin {
 				pluginResult = new PluginResult(PluginResult.Status.JSON_EXCEPTION, msg);
 			}
 
+		}
+		else if ( ACTION_STOP_LISTENING.equals(action) )
+		{
+			pluginResult = action_stopListening();
+		}
+		else if ( ACTION_LISTENINSECURE.equals(action) )
+		{
+			try {
+				this.callback_listenInsecure = callbackId;
+				pluginResult = action_listenInsecure(args.getString(0),args.getString(1));
+			} catch (JSONException e) {
+				String msg = e.toString() + " / " + e.getMessage();
+				logErr( msg );
+				pluginResult = new PluginResult(PluginResult.Status.JSON_EXCEPTION, msg);
+			}
+		}
+		else if ( ACTION_STOP_INSECURELISTENING.equals(action) )
+		{
+			pluginResult = action_stopInsecureListening();
 		}
 		else if ( ACTION_READ.equals(action) ) 
 		{
@@ -679,11 +714,214 @@ public class BluetoothPlugin extends Plugin {
 	 * @return no result, result will async
 	 */
 	private PluginResult action_listen(String name, String uuid) {
+		if (m_listenThread != null)
+			action_stopListening();
 		
-		// TODO : get  BluetoothServerSocket from listenUsingRfcommWithServiceRecord
-		// TODO : create thread for incoming connections
+		m_listenThread = new ListenThread(
+				this.cordova, name, UUID.fromString(uuid));
+		m_listenThread.start();
 		
 		return new PluginResult(PluginResult.Status.NO_RESULT);
+	}
+	
+	/**
+	 * stopListening() function
+	 * @return immediate return
+	 */
+	private PluginResult action_stopListening() {
+		if (m_listenThread != null) {
+			m_listenThread.cancel();
+		}
+		m_listenThread = null;
+		return new PluginResult(PluginResult.Status.OK);
+	}
+	
+	/**
+	 * Listen Thread
+	 * @author hk
+	 */
+	private class ListenThread extends Thread {
+		private final BluetoothServerSocket mm_serverSocket;
+		private CordovaInterface mm_cordova;
+		private boolean m_running = false;
+		public ListenThread(CordovaInterface cordova, String name, UUID uuid) {
+			mm_cordova = cordova;
+			BluetoothServerSocket tmp = null;
+			try {
+				tmp = m_bluetoothAdapter.listenUsingRfcommWithServiceRecord(name, uuid);
+			} catch (IOException e) {
+				logErr(e.toString() + " / " + e.getMessage());
+			}
+			mm_serverSocket = tmp;
+		}
+		public void run() {
+			m_running = true;
+			logDbg("ListenThread::run()");
+			setName("ListenThread");
+			while (m_running) {
+				BluetoothSocket bluetoothSocket = null;
+				try {
+					if (mm_serverSocket == null) {
+						String msg = "No ServerSocket !"; 
+						logErr(msg);
+						returnResult(new PluginResult(PluginResult.Status.ERROR, msg));
+						break;
+					}
+					bluetoothSocket = mm_serverSocket.accept();
+				} catch (IOException e) {
+					logErr(e.toString() + " / " + e.getMessage());
+				}
+				if (bluetoothSocket != null) {
+					m_bluetoothSockets.add(bluetoothSocket);
+					int socketId = m_bluetoothSockets.indexOf(bluetoothSocket);
+					returnResult(new PluginResult(PluginResult.Status.OK, socketId));
+				}
+				else {
+					String msg = "Unable to open socket";
+					logErr(msg);
+					returnResult(new PluginResult(PluginResult.Status.ERROR, msg));
+				}
+			}
+			m_running = false;
+		}
+		private void returnResult(final PluginResult pluginResult) {
+			this.mm_cordova.getActivity().runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					success(pluginResult, callback_listen);					
+				}
+			});
+		}
+		public void cancel() {
+			synchronized (ListenThread.this) {
+				m_running = false;
+			}
+			logDbg("ListenThread::cancel()");
+			if (mm_serverSocket != null) {
+				try {
+					mm_serverSocket.close();
+				} catch (IOException e) {
+					logErr("Cannot close ServerSocket !");
+				}
+			}
+			else
+				logErr("No ServerSocket");
+		}
+	}
+	
+	/**
+	 * listenInsecure(name,uuid) function 
+	 * @param name service name for SDP record
+	 * @param uuid uuid for SDP record
+	 * @return no result, result will async
+	 */
+	private PluginResult action_listenInsecure(String name, String uuid) {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD_MR1) {
+			String msg = "Not supported, minimum SDK version is :" + 
+					Build.VERSION_CODES.GINGERBREAD_MR1;
+			logErr(msg);
+			return null;
+		}
+		if (m_listenInsecureThread != null)
+			action_stopInsecureListening();
+		
+		m_listenInsecureThread = new ListenInsecureThread(
+				this.cordova, name, UUID.fromString(uuid));
+		m_listenInsecureThread.start();
+		
+		return new PluginResult(PluginResult.Status.NO_RESULT);
+	}
+	
+	/**
+	 * stopListening() function
+	 * @return immediate return
+	 */
+	private PluginResult action_stopInsecureListening() {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD_MR1) {
+			String msg = "Not supported, minimum SDK version is :" + 
+					Build.VERSION_CODES.GINGERBREAD_MR1;
+			logErr(msg);
+			return null;
+		}
+		if (m_listenInsecureThread != null) {
+			m_listenInsecureThread.cancel();
+		}
+		m_listenInsecureThread = null;
+		return new PluginResult(PluginResult.Status.OK);
+	}
+	
+	/**
+	 * Listen Thread
+	 * @author hk
+	 */
+	@TargetApi(10)
+	private class ListenInsecureThread extends Thread {
+		private final BluetoothServerSocket mm_serverSocket;
+		private CordovaInterface mm_cordova;
+		private boolean m_running = false;
+		public ListenInsecureThread(CordovaInterface cordova, String name, UUID uuid) {
+			mm_cordova = cordova;
+			BluetoothServerSocket tmp = null;
+			try {
+				tmp = m_bluetoothAdapter.listenUsingInsecureRfcommWithServiceRecord(name, uuid);
+			} catch (IOException e) {
+				logErr(e.toString() + " / " + e.getMessage());
+			}
+			mm_serverSocket = tmp;
+		}
+		public void run() {
+			m_running = true;
+			logDbg("ListenInsecureThread::run()");
+			setName("ListenInsecureThread");
+			while (m_running) {
+				BluetoothSocket bluetoothSocket = null;
+				try {
+					if (mm_serverSocket == null) {
+						String msg = "No ServerSocket !"; 
+						logErr(msg);
+						returnResult(new PluginResult(PluginResult.Status.ERROR, msg));
+						break;
+					}
+					bluetoothSocket = mm_serverSocket.accept();
+				} catch (IOException e) {
+					logErr(e.toString() + " / " + e.getMessage());
+				}
+				if (bluetoothSocket != null) {
+					m_bluetoothSockets.add(bluetoothSocket);
+					int socketId = m_bluetoothSockets.indexOf(bluetoothSocket);
+					returnResult(new PluginResult(PluginResult.Status.OK, socketId));
+				}
+				else {
+					String msg = "Unable to open socket";
+					logErr(msg);
+					returnResult(new PluginResult(PluginResult.Status.ERROR, msg));
+				}
+			}
+			m_running = false;
+		}
+		private void returnResult(final PluginResult pluginResult) {
+			this.mm_cordova.getActivity().runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					success(pluginResult, callback_listen);					
+				}
+			});
+		}
+		public void cancel() {
+			synchronized (ListenInsecureThread.this) {
+				m_running = false;
+			}
+			logDbg("ListenInsecureThread::cancel()");
+			if (mm_serverSocket != null) {
+				try {
+					mm_serverSocket.close();
+				} catch (IOException e) {
+					logErr("Cannot close ServerSocket !");
+				}
+			}
+			else
+				logErr("No ServerSocket");
+		}
 	}
 	
 	

@@ -179,15 +179,48 @@ cordova.define("cordova/plugin/bluetooth", function(require, exports, module) {
 	}
 	
 	
-	// TODO : not implemented
 	/**
 	 * Listens incoming connections
 	 * 
-	 * @param successCallback function to be called when the connection was closed successfully
-	 * @param errorCallback function to be called when there was a problem while closing the connection
+	 * @param successCallback function to be called on every new connection establish
+	 * @param errorCallback function to be called when there was a problem while listening
 	 */
 	Bluetooth.prototype.listen = function(successCallback,failureCallback,name,uuid) {
 	    return exec(successCallback, failureCallback, 'BluetoothPlugin', 'listen', [name,uuid]);
+	}
+	
+	/**
+	 * Stops listening incoming connections
+	 * 
+	 * @param successCallback function to be called when stops listening successfully
+	 * @param errorCallback function to be called when there was a problem while stopping listening
+	 */
+	Bluetooth.prototype.stopListening = function(successCallback,failureCallback) {
+		return exec(successCallback, failureCallback, 'BluetoothPlugin', 'stopListening', []);
+	}
+	
+	/**
+	 * Listens incoming insecure connections
+	 * 
+	 * Needs minimum SDK API 10
+	 * 
+	 * @param successCallback function to be called on every new connection establish
+	 * @param errorCallback function to be called when there was a problem while listening
+	 */
+	Bluetooth.prototype.listenInsecure = function(successCallback,failureCallback,name,uuid) {
+		return exec(successCallback, failureCallback, 'BluetoothPlugin', 'listenInsecure', [name,uuid]);
+	}
+	
+	/**
+	 * Stops listening incoming insecure connections
+	 * 
+	 * Needs minimum SDK API 10
+	 * 
+	 * @param successCallback function to be called when stops listening successfully
+	 * @param errorCallback function to be called when there was a problem while stopping listening
+	 */
+	Bluetooth.prototype.stopInsecureListening = function(successCallback,failureCallback) {
+		return exec(successCallback, failureCallback, 'BluetoothPlugin', 'stopInsecureListening', []);
 	}
 	
 	
