@@ -2,7 +2,7 @@
 
 Phonegap (Cordova) 2.0 için bir eklentidir.
 
-For English please see [readmeen].
+For English please see [README_EN.md].
 
 Bu projeye [BluetoothPlugin]'i çatallayarak başlamıştım. Eklenti ile Bluetooth donanımına 
 javascript üzerinden erişilebiliyor. Çatalladığım eklentiyi 2.0 ile çalışacak şekilde
@@ -197,7 +197,7 @@ Tam bir örnek için *assets/www/index.html* dosyasına bakın.
 # Lisans #
    Apache Lisansı, 2.0 Sürümü ile lisanslanmıştır. Ayrıntılı bilgi için [LICENSE] dosyasına bakın.
 
-   [readmeen]: https://github.com/huseyinkozan/phonegap-bluetooh/blob/master/README_EN.md
+   [README_EN.md]: https://github.com/huseyinkozan/phonegap-bluetooth/blob/master/README_EN.md
    [BluetoothPlugin]: https://github.com/phonegap/phonegap-plugins/tree/master/Android/BluetoothPlugin
-   [LICENSE]: https://github.com/huseyinkozan/phonegap-bluetooh/blob/master/LICENSE
+   [LICENSE]: https://github.com/huseyinkozan/phonegap-bluetooth/blob/master/LICENSE
    [onload]: http://www.w3schools.com/jsref/event_body_onload.asp

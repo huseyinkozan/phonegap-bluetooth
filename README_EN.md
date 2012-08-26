@@ -189,5 +189,5 @@ Please see *assets/www/index.html* for example usage.
 
 
    [BluetoothPlugin]: https://github.com/phonegap/phonegap-plugins/tree/master/Android/BluetoothPlugin
-   [LICENSE]: https://github.com/huseyinkozan/phonegap-bluetooh/blob/master/LICENSE
+   [LICENSE]: https://github.com/huseyinkozan/phonegap-bluetooth/blob/master/LICENSE
    [onload]: http://www.w3schools.com/jsref/event_body_onload.asp
