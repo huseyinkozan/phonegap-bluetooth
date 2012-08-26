@@ -1,179 +1,189 @@
-# Phonegap Bluetooth Plugin #
+# Phonegap Bluetooth Eklentisi #
 
-Plugin for Phonegap (Cordova) 2.0
+Phonegap (Cordova) 2.0 için bir eklentidir.
 
-This project was started as a fork of [BluetoothPlugin]. With this plugin, you can access 
-Bluetooth stack using javascript on Phonegap. After add some new functionality and 
-change some function names, I decided to move it as a new project. So, if you have an 
-application which uses old [BluetoothPlugin], you must migrate to new API functions.
+For English please see [readme_en].
 
-## Platform Support ##
+Bu projeye [BluetoothPlugin]'i çatallayarak başlamıştım. Eklenti ile Bluetooth donanımına 
+javascript üzerinden erişilebiliyor. Çatalladığım eklentiyi 2.0 ile çalışacak şekilde
+düzeltirken bazı eksiklerini gördüm ve yeni özellikler ekledim. Daha sonra da önceki 
+fonksiyonlara verilen isimlerin değişmesi gerektiğini düşündüm. Phonegap eklentilerindeki
+Bluetooth eklentisi ile farklılıkları olduğundan önceden yazılmış bir kodunuz varsa 
+bu eklentiyi kullanırken yeni API fonksiyonlarına özellikle dikkat etmeniz gerekiyor.
+
+## Platform Desteği ##
 <table>
     <tr>
-         <th>Function</th>
+         <th>Fonksiyon</th>
          <th>Android</th>
-         <th>Min SDK Version</th>
-         <th>Details</th>
+         <th>En Düşük SDK Sürümü</th>
+         <th>Ayrıntılar</th>
     </tr>
     <tr>
          <td>isSupported()</td>
-         <td>Yes</td>
+         <td>Evet</td>
          <td>5</td>
-         <td>Checks if system supports Bluetooth</td>
+         <td>Bluetooth desteğinin olup olmadığını denetler.</td>
     </tr>
     <tr>
          <td>enable()</td>
-         <td>Yes</td>
+         <td>Evet</td>
          <td>5</td>
-         <td>Requests to enable the Bluetooth</td>
+         <td>Kullanıcıdan Bluetooth u açması için isten gönderir.</td>
     </tr>
     <tr>
          <td>disable()</td>
-         <td>Yes</td>
+         <td>Evet</td>
          <td>5</td>
-         <td>Disables Bluetooth</td>
+         <td>Bluetooth u kapatır.</td>
     </tr>
     <tr>
          <td>isEnabled()</td>
-         <td>Yes</td>
+         <td>Evet</td>
          <td>5</td>
-         <td>Checks if Bluetooth enabled</td>
+         <td>Bluetooth un açık olup olmadığını kontrol eder.</td>
     </tr>
     <tr>
          <td>getAddress()</td>
-         <td>Yes</td>
+         <td>Evet</td>
          <td>5</td>
-         <td>Gets self Bluetooth address</td>
+         <td>Çalıştırdığınız cihazın Bluetooth adresini getirir.</td>
     </tr>
     <tr>
          <td>getName()</td>
-         <td>Yes</td>
+         <td>Evet</td>
          <td>5</td>
-         <td>Gets self Bluetooth name</td>
+         <td>Çalıştırdığınız cihazın Bluetooth taki görünür ismini getirir.</td>
     </tr>
     <tr>
          <td>requestDiscoverable()</td>
-         <td>Yes</td>
+         <td>Evet</td>
          <td>5</td>
-         <td>Requests to enable the device shown by others</td>
+         <td>Çalıştırdığınız cihazın diğer cihazlar tarafından görünmesi için 
+         kullanıcıdan izin ister.</td>
     </tr>
     <tr>
          <td>startDiscovery()</td>
-         <td>Yes</td>
+         <td>Evet</td>
          <td>5</td>
-         <td>Trys to find devices by discovery</td>
+         <td>Keşfedilebilir cihazları tarar.</td>
     </tr>
     <tr>
          <td>cancelDiscovery()</td>
-         <td>Yes</td>
+         <td>Evet</td>
          <td>5</td>
-         <td>Cancels ongoing discovery</td>
+         <td>Yürümekte olan tarama işlemini iptal eder.</td>
     </tr>
     <tr>
          <td>getBondedDevices()</td>
-         <td>Yes</td>
+         <td>Evet</td>
          <td>5</td>
-         <td>Gets bonded (paired) devices</td>
+         <td>Eşleştirilmiş cihazları getirir.</td>
     </tr>
     <tr>
          <td>fetchUUIDs()</td>
-         <td>Yes</td>
+         <td>Evet</td>
          <td>15</td>
-         <td>Gets list of UUIDs from remote device</td>
+         <td>Uzak cihazın UUID lerini sorgulayıp getirir.</td>
     </tr>
     <tr>
          <td>connect()</td>
-         <td>Yes</td>
+         <td>Evet</td>
          <td>5</td>
-         <td>Connects to remote device service with UUID</td>
+         <td>UUID kullanarak uzak cihazla bağlantı kurar.</td>
     </tr>
     <tr>
          <td>connectInsecure()</td>
-         <td>Yes</td>
+         <td>Evet</td>
          <td>10</td>
-         <td>Connects to remote device service with UUID insecurely</td>
+         <td>UUID kullanarak uzak cihazla güvensiz bağlantı kurar.</td>
     </tr>
     <tr>
          <td>disconnect()</td>
-         <td>Yes</td>
+         <td>Evet</td>
          <td>5</td>
-         <td>Closes current connection</td>
+         <td>Mevcut bağlantıyı sonlandırır.</td>
     </tr>
     <tr>
          <td>listen()</td>
-         <td>Yes</td>
+         <td>Evet</td>
          <td>5</td>
-         <td>Listens incoming connections</td>
+         <td>Gelen bağlantı isteklerini dinler.</td>
     </tr>
     <tr>
          <td>stopListening()</td>
-         <td>Yes</td>
+         <td>Evet</td>
          <td>5</td>
-         <td>Stops listening incoming connections</td>
+         <td>Gelen bağlantıları dinlemeyi durdurur.</td>
     </tr>
     <tr>
          <td>listenInsecure()</td>
-         <td>Yes</td>
+         <td>Evet</td>
          <td>10</td>
-         <td>Listens incoming insecure connections</td>
+         <td>Gelen güvensiz bağlantı isteklerini dinler.</td>
     </tr>
     <tr>
          <td>stopInsecureListening()</td>
-         <td>Yes</td>
+         <td>Evet</td>
          <td>10</td>
-         <td>Stops listening incoming insecure connections</td>
+         <td>Gelen bağlantıları dinlemeyi durdurur.</td>
     </tr>
     <tr>
          <td>read()</td>
-         <td>Yes</td>
+         <td>Evet</td>
          <td>5</td>
-         <td>Reads data from connected device</td>
+         <td>Bağlantı kurulmuş cihazdan veri okur.</td>
     </tr>
     <tr>
          <td>write()</td>
-         <td>Yes</td>
+         <td>Evet</td>
          <td>5</td>
-         <td>Writes data to connected device</td>
+         <td>Bağlantı kurulmuş cihaza veri yazar.</td>
     </tr>
 </table>
 
 
 
-# How to Use #
+# Nasıl Kullanılır #
 
-## Android ##
-Copy required files in to specified folders :
+## Android İçin ##
+Sıradan bir Phonegap projesi oluşturup aşağıdaki dosyaları projeye aynı dizinlerde kopyalayın :
 ```
 assets/www/bluetooth.js
 src/org/apache/cordova/plugin/BluetoothPlugin.java
 ```
-> **Tip:** You can just copy folders and paste it into the project with right click in Eclipse.
+> **İpucu:** İndirmiş olduğunuz ekentinin ana dizindeyken tüm dizinleri kopyalayıp Eclipse teki 
+projenize sağ tıklayabilirsiniz.
 
-> If you want to run example index.html you also need these files :
+> Eğer örnek olarak verilen index.htm i çalıştırmak istiyorsanız aşağıdaki dosyalara da ihtiyacınız olacak:
 >> assets/www/jquery-1.8.0.js <br>
 >> assets/www/cordova-2.0.0.js
 
-Before using the Bluetooth plugin, you must do some changes on Phonegap project.
+Bluetooth eklentisini kullanmadan önce projenizde bazı düzenlemeler yapmanız gerekiyor. Aşağıda 
+bu verilen dosyalarda neler yapmanız gerektiği veriliyor.
 
 #### AndroidManifest.xml ####
-Add the following lines between `<manifest>` and `</manifest>` tags to get Bluetooth permission:
+Bluetooth yetkisi alablmek için aşağıdaki satırları `<manifest>` ve `</manifest>` etiketlerinin
+arasına girin :
 ```xml
 <uses-permission android:name="android.permission.BLUETOOTH" />
 <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
 ```
 
 #### res/xml/config.xml ####
-Add the following line between `<plugin>` and `</plugin>` tags to inform Phonegap about new plugin :
+Phonegap e yeni eklentinizi tanıtmak için aşağıdaki satırı `<plugin>` ve `</plugin>` etiketlerinin 
+arasına girin :
 ```xml
 <plugin name="BluetoothPlugin" value="org.apache.cordova.plugin.BluetoothPlugin"/>
 ```
 
 #### /assets/www/XXXXXX.html ####
-Add the following line between `<head>` and `</head>` tags to include javascript file of the API :
+API yi javascript e dahil etmek için aşağıdaki satırı `<head>` and `</head>` etiketlerinin arasına girin : 
 ```html
 <script type="text/javascript" charset="utf-8" src="bluetooth.js"></script>
 ```
-And you also need to initialize javascript object. You can do it [onload] event :
+Bununla birlikte javascript nesnesini hazırlamanız gerekiyor. Hazrılama işlemini aşağıda görüleceği 
+üzere [onload] olayı ile yapabilirsiniz :
 ```javascript
 var g_bluetoothPlugin = null;
 function onload() {
@@ -182,12 +192,12 @@ function onload() {
 	}, true);
 }
 ```
-Please see *assets/www/index.html* for example usage.
+Tam bir örnek için *assets/www/index.html* dosyasına bakın.
 
-# License #
-   Licensed under the Apache License, Version 2.0. See [LICENSE] file for furthere information.
+# Lisans #
+   Apache Lisansı, 2.0 Sürümü ile lisanslanmıştır. Ayrıntılı bilgi için [LICENSE] dosyasına bakın.
 
-
+   [readme_en] : https://github.com/huseyinkozan/phonegap-bluetooh/blob/master/README_EN.md
    [BluetoothPlugin]: https://github.com/phonegap/phonegap-plugins/tree/master/Android/BluetoothPlugin
    [LICENSE]: https://github.com/huseyinkozan/phonegap-bluetooh/blob/master/LICENSE
    [onload]: http://www.w3schools.com/jsref/event_body_onload.asp
