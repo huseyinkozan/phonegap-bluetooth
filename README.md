@@ -126,7 +126,7 @@ bu eklentiyi kullanırken yeni API fonksiyonlarına özellikle dikkat etmeniz ge
          <td>stopInsecureListening()</td>
          <td>Evet</td>
          <td>10</td>
-         <td>Gelen bağlantıları dinlemeyi durdurur.</td>
+         <td>Gelen güvensiz bağlantıları dinlemeyi durdurur.</td>
     </tr>
     <tr>
          <td>read()</td>
