@@ -82,16 +82,16 @@ application which uses old [BluetoothPlugin], you must migrate to new API functi
          <td>Gets list of UUIDs from remote device</td>
     </tr>
     <tr>
+         <td>isFetchUUIDsSupported()</td>
+         <td>Yes</td>
+         <td>15</td>
+         <td>Gets support of UUID fetching from remote device</td>
+    </tr>
+    <tr>
          <td>connect()</td>
          <td>Yes</td>
          <td>5</td>
          <td>Connects to remote device service with UUID</td>
-    </tr>
-    <tr>
-         <td>connectInsecure()</td>
-         <td>Yes</td>
-         <td>10</td>
-         <td>Connects to remote device service with UUID insecurely</td>
     </tr>
     <tr>
          <td>disconnect()</td>
@@ -106,34 +106,22 @@ application which uses old [BluetoothPlugin], you must migrate to new API functi
          <td>Listens incoming connections</td>
     </tr>
     <tr>
-         <td>stopListening()</td>
+         <td>cancelListening()</td>
          <td>Yes</td>
          <td>5</td>
          <td>Stops listening incoming connections</td>
     </tr>
     <tr>
-         <td>listenInsecure()</td>
-         <td>Yes</td>
-         <td>10</td>
-         <td>Listens incoming insecure connections</td>
-    </tr>
-    <tr>
-         <td>stopInsecureListening()</td>
-         <td>Yes</td>
-         <td>10</td>
-         <td>Stops listening incoming insecure connections</td>
-    </tr>
-    <tr>
          <td>read()</td>
          <td>Yes</td>
          <td>5</td>
-         <td>Reads data from connected device</td>
+         <td>Reads data from connected device <b>Not Fiished!</b></td>
     </tr>
     <tr>
          <td>write()</td>
          <td>Yes</td>
          <td>5</td>
-         <td>Writes data to connected device</td>
+         <td>Writes data to connected device <b>Not Fiished!</b></td>
     </tr>
 </table>
 
@@ -150,7 +138,6 @@ src/org/apache/cordova/plugin/BluetoothPlugin.java
 > **Tip:** You can just copy folders and paste it into the project with right click in Eclipse.
 
 > If you want to run example index.html you also need these files :
->> assets/www/jquery-1.8.0.js <br>
 >> assets/www/cordova-2.0.0.js
 
 Before using the Bluetooth plugin, you must do some changes on Phonegap project.
@@ -175,11 +162,11 @@ Add the following line between `<head>` and `</head>` tags to include javascript
 ```
 And you also need to initialize javascript object. You can do it [onload] event :
 ```javascript
-var g_bluetoothPlugin = null;
+var bluetoothPlugin = null;
 function onload() {
    document.addEventListener("deviceready", function() {
-		g_bluetoothPlugin = cordova.require( 'cordova/plugin/bluetooth' );
-	}, true);
+		bluetoothPlugin = cordova.require( 'cordova/plugin/bluetooth' );
+	}, false);
 }
 ```
 Please see *assets/www/index.html* for example usage.

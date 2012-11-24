@@ -87,16 +87,16 @@ bu eklentiyi kullanırken yeni API fonksiyonlarına özellikle dikkat etmeniz ge
          <td>Uzak cihazın UUID lerini sorgulayıp getirir.</td>
     </tr>
     <tr>
+         <td>isFetchUUIDsSupported()</td>
+         <td>Evet</td>
+         <td>15</td>
+         <td>Uzak cihazın UUID lerini sorgulama desteğini döndürür.</td>
+    </tr>
+    <tr>
          <td>connect()</td>
          <td>Evet</td>
          <td>5</td>
          <td>UUID kullanarak uzak cihazla bağlantı kurar.</td>
-    </tr>
-    <tr>
-         <td>connectInsecure()</td>
-         <td>Evet</td>
-         <td>10</td>
-         <td>UUID kullanarak uzak cihazla güvensiz bağlantı kurar.</td>
     </tr>
     <tr>
          <td>disconnect()</td>
@@ -111,34 +111,22 @@ bu eklentiyi kullanırken yeni API fonksiyonlarına özellikle dikkat etmeniz ge
          <td>Gelen bağlantı isteklerini dinler.</td>
     </tr>
     <tr>
-         <td>stopListening()</td>
+         <td>cancelListening()</td>
          <td>Evet</td>
          <td>5</td>
          <td>Gelen bağlantıları dinlemeyi durdurur.</td>
     </tr>
     <tr>
-         <td>listenInsecure()</td>
-         <td>Evet</td>
-         <td>10</td>
-         <td>Gelen güvensiz bağlantı isteklerini dinler.</td>
-    </tr>
-    <tr>
-         <td>stopInsecureListening()</td>
-         <td>Evet</td>
-         <td>10</td>
-         <td>Gelen güvensiz bağlantıları dinlemeyi durdurur.</td>
-    </tr>
-    <tr>
          <td>read()</td>
          <td>Evet</td>
          <td>5</td>
-         <td>Bağlantı kurulmuş cihazdan veri okur.</td>
+         <td>Bağlantı kurulmuş cihazdan veri okur.<b>Tamamlanmadı!</b></td>
     </tr>
     <tr>
          <td>write()</td>
          <td>Evet</td>
          <td>5</td>
-         <td>Bağlantı kurulmuş cihaza veri yazar.</td>
+         <td>Bağlantı kurulmuş cihaza veri yazar.<b>Tamamlanmadı!</b></td>
     </tr>
 </table>
 
@@ -156,8 +144,7 @@ src/org/apache/cordova/plugin/BluetoothPlugin.java
 projenize sağ tıklayabilirsiniz.
 
 > Eğer örnek olarak verilen index.htm i çalıştırmak istiyorsanız aşağıdaki dosyalara da ihtiyacınız olacak:
->> assets/www/jquery-1.8.0.js <br>
->> assets/www/cordova-2.0.0.js
+>> assets/www/cordova-2.2.0.js
 
 Bluetooth eklentisini kullanmadan önce projenizde bazı düzenlemeler yapmanız gerekiyor. Aşağıda 
 bu verilen dosyalarda neler yapmanız gerektiği veriliyor.
@@ -185,11 +172,11 @@ API yi javascript e dahil etmek için aşağıdaki satırı `<head>` and `</head
 Bununla birlikte javascript nesnesini hazırlamanız gerekiyor. Hazrılama işlemini aşağıda görüleceği 
 üzere [onload] olayı ile yapabilirsiniz :
 ```javascript
-var g_bluetoothPlugin = null;
+var bluetoothPlugin = null;
 function onload() {
    document.addEventListener("deviceready", function() {
-		g_bluetoothPlugin = cordova.require( 'cordova/plugin/bluetooth' );
-	}, true);
+		bluetoothPlugin = cordova.require( 'cordova/plugin/bluetooth' );
+	}, false);
 }
 ```
 Tam bir örnek için *assets/www/index.html* dosyasına bakın.

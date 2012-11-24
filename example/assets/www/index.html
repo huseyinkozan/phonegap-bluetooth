@@ -1,0 +1,89 @@
+<!DOCTYPE HTML>
+<html>
+
+  <head>
+
+    <meta name="viewport" content="width=320; user-scalable=no" />
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+
+    <title>Phonegap - BluetoothPlugin Sample</title>
+
+    <script type="text/javascript" charset="utf-8" src="cordova-2.2.0.js"></script>
+    <script type="text/javascript" charset="utf-8" src="bluetooth.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="index.css">
+    <script type="text/javascript" charset="utf-8" src="index.js"></script>
+
+  </head>
+
+  <body onload="onload();">
+  
+    <div id="page-content">
+      
+      <div>
+        Enable Bluetooth visibility to other devices for <b>20</b> seconds : 
+        <input type="button" id="request-discoverable-button" value="Request Discoverable" onclick="requestDiscoverable(20);" />
+      </div>
+      
+      <div>
+        Enable or disable Bluetooth : 
+        <input type="button" id="enable-disable-button" value="Off" onclick="toggleEnableDisable(this)" />
+        
+        <div>
+          Get device address : 
+          <input type="button" id="address-button" value="Get Address" onclick="getAddress();" />
+        </div>
+        
+        <div>
+          Get device name : 
+          <input type="button" id="name-button" value="Get Name" onclick="getName();" />
+        </div>
+        
+        <div>
+          Discovery Devices : 
+          <input type="button" id="discovery-button" value="Discovery" onclick="toggleDiscovery(this)" />
+          <br />
+          Found Devices : 
+          <select id="discovered-device-list"></select>
+        </div>
+        
+        <div>
+          Get Bonded (Paired) Devices : 
+          <input type="button" id="bonded-devices-button" value="Bonded Devices" onclick="bondedDevices();" />
+          <br />
+          Bonded Devices : 
+          <select id="bonded-device-list"></select> 
+          <div>
+            Get UUIDs of selected device : 
+            <input type="button" id="fetch-uuids-button" value="Fetch UUIDs" onclick="fetchUUIDs();" />
+            <br />
+            UUIDs : 
+            <select id="uuid-list"></select>
+            <div>
+              <input type="checkbox" id="secure-connect-check">Make Secure Connection</input>
+              <input type="button" id="connect-button" value="Connect" onclick="toggleConnect(this)" />
+            </div>
+          </div>
+        </div>
+        
+        <div>
+          Listen as named <b id="listening-name"></b>, for UUID=<b id="listening-uuid"></b> : 
+          <input type="checkbox" id="secure-listen-check">Secure</input>
+          <input type="button" id="listen-button" value="Listen" onclick="toggleListen(this);" />
+        </div>
+
+      </div> <!-- Enable Disable Bluetooth -->
+      
+      <div>
+        <pre>
+          THESE ARE NOT FINISHED !!!
+          <a href="#" onclick="readDevice();">read()</a>
+          <a href="#" onclick="writeDevice();">write()</a>
+        </pre>
+      </div>
+       
+      <div id='bt-data-dump'></div>
+       
+     </div> <!-- page context -->
+  </body>
+</html>
