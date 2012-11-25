@@ -281,6 +281,8 @@ function fetchUUIDs() {
 function disableUUIDRelatedInputs(disable) {
 
   document.getElementById("connect-button").disabled = disable;
+  if (disable)
+    document.getElementById("disconnect-button").disabled = disable;
   document.getElementById("secure-connect-check").disabled = disable;
   
 }
@@ -315,52 +317,60 @@ function disableBluetoothConnectionRelatedInputs(disable) {
 
 
 
-function toggleConnect(item) {
+function connect() {
+
+  if ( ! bluetoothPugin)
+    return;
+    
+  if (socketId >= 0)
+    return;
 
   var bondedDeviceList = document.getElementById("bonded-device-list");
   var uuidList = document.getElementById("uuid-list");
   var secureCheck = document.getElementById("secure-connect-check");
 
-  if(item.value == "Connect") {
-    item.value = "Disconnect";
-    if (bluetoothPugin) {
-      bluetoothPugin.connect(
-        function(sockId) {
-          socketId = sockId; 
-          console.log( 'Socket-id: ' + socketId );
-          alert("Connected, Socket-id:" + socketId);
-        }, 
-        function(error) {
-          item.value = "Connect";
-          alert( 'Error: ' + error );
-        }, 
-        bondedDeviceList.options[bondedDeviceList.selectedIndex].value,
-        uuidList.options[uuidList.selectedIndex].value,
-        secureCheck.checked
-      );
-    }
-  } else { /* Disconnect */
-    item.disabled = true;
-    if (bluetoothPugin) {
-      bluetoothPugin.disconnect(
-        function(){
-          item.disabled = false;
-          item.value = "Connect";
-          alert("Disconnected");
-          socketId = -1;
-        },
-        function(error){
-          item.disabled = false;
-          item.value = "Disconnect";
-          alert("Error while disconnecting : " + error)
-        },
-        socketId
-      );
-    }
-  }
+  bluetoothPugin.connect(
+    function(sockId) {
+      socketId = sockId; 
+      document.getElementById("disconnect-button").disabled = false;
+      console.log( 'Socket-id: ' + socketId );
+      alert("Connected, Socket-id:" + socketId);
+    }, 
+    function(error) {
+      document.getElementById("disconnect-button").disabled = true;
+      alert( 'Error: ' + error );
+    }, 
+    bondedDeviceList.options[bondedDeviceList.selectedIndex].value,
+    uuidList.options[uuidList.selectedIndex].value,
+    secureCheck.checked
+  );
 
 }
 
+
+
+
+
+function disconnect() {
+
+  if ( ! bluetoothPugin)
+    return;
+    
+  if (socketId < 0)
+  return;
+  
+  bluetoothPugin.disconnect(
+    function(){
+      alert("Disconnected");
+      socketId = -1;
+    },
+    function(error){
+      alert("Error while disconnecting : " + error)
+    },
+    socketId
+  );
+
+}
 
 
 
