@@ -1,6 +1,6 @@
 # Phonegap Bluetooth Eklentisi #
 
-Phonegap (Cordova) 2.0 için bir eklentidir.
+Phonegap (Cordova) 2.2.x için bir eklentidir.
 
 For English please see [README_EN.md].
 
