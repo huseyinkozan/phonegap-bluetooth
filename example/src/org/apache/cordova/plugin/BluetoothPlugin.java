@@ -1,5 +1,5 @@
 /*
-   Copyright Agust, 2012 Hüseyin Kozan - http://huseyinkozan.com.tr
+   Copyright December, 2012 Hüseyin Kozan - http://huseyinkozan.com.tr
    
    Copyright 2012 Wolfgang Koller - http://www.gofg.at/
    
@@ -91,12 +91,15 @@ public class BluetoothPlugin extends CordovaPlugin {
 	public CallbackContext callback_discovery = null;
 	public CallbackContext callback_discoverable = null;
 	public CallbackContext callback_listen = null;
+	public CallbackContext callback_connect = null;
+	public CallbackContext callback_read = null;
 	
-	private ArrayList<BluetoothSocket> m_bluetoothSockets = new ArrayList<BluetoothSocket>();
+	private ArrayList<BluetoothSocket> m_sockets = new ArrayList<BluetoothSocket>();
 	private JSONArray m_discoveredDevices = null;
 	
 	private ListenThread m_listenThread = null;
 	
+	private ArrayList<ReadThread> m_readThreads = new ArrayList<ReadThread>();
 
 	/**
 	 * Constructor for Bluetooth plugin
@@ -217,9 +220,10 @@ public class BluetoothPlugin extends CordovaPlugin {
 		}
 		else if ( ACTION_REQUEST_DISCOVERABLE.equals(action) )
 		{
+			final int duration = args.getInt(0);
 			this.callback_discoverable = callbackContext;
 			Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-			intent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, args.getInt(0));
+			intent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, duration);
 			this.cordova.startActivityForResult(
 					this, intent, this.REQUEST_CODE_DISCOVERABLE);
 			PluginResult pluginResult = 
@@ -273,6 +277,7 @@ public class BluetoothPlugin extends CordovaPlugin {
 		}
 		else if (ACTION_FETCHUUIDS.equals(action))
 		{
+			final String address = args.getString(0);
 			this.callback_uuids = callbackContext;
 			
 			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {
@@ -283,12 +288,13 @@ public class BluetoothPlugin extends CordovaPlugin {
 				return true;
 			}
 			try {
-				logDbg("Listing UUIDs for : " + args.getString(0));
+				logDbg("Listing UUIDs for : " + address);
 				// Fetch UUIDs from bluetooth device
 				BluetoothDevice bluetoothDevice = 
-						m_bluetoothAdapter.getRemoteDevice(args.getString(0));
+						m_bluetoothAdapter.getRemoteDevice(address);
 				// min api 15 !!!
-				Method m = bluetoothDevice.getClass().getMethod("fetchUuidsWithSdp", (Class[]) null);
+				Method m = bluetoothDevice.getClass().
+						getMethod("fetchUuidsWithSdp", (Class[]) null);
 				m.invoke(bluetoothDevice, (Object[]) null );
 				PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
 				pluginResult.setKeepCallback(true);
@@ -304,51 +310,66 @@ public class BluetoothPlugin extends CordovaPlugin {
 			final String address = args.getString(0);
 			final String uuid = args.getString(1);
 			final boolean secure = args.getBoolean(2);
+			this.callback_connect = callbackContext;
 			cordova.getThreadPool().execute(new Runnable() {
 				public void run() {
-					BluetoothSocket bluetoothSocket = null;
+					BluetoothSocket socket = null;
 					try {
 						logDbg("Connecting...");
 						// Cancel discovery because it will slow down the connection
 						if(m_bluetoothAdapter.isDiscovering())
 							m_bluetoothAdapter.cancelDiscovery();
 						BluetoothDevice bluetoothDevice = 
-								m_bluetoothAdapter.getRemoteDevice(address);
+								m_bluetoothAdapter.getRemoteDevice(
+										address);
 						if (secure) {
-							bluetoothSocket = connectSecureHelper(bluetoothDevice, UUID.fromString(uuid));
+							socket = connectSecureHelper(
+									bluetoothDevice, 
+									UUID.fromString(uuid));
 						}
 						else {
-							bluetoothSocket = connectInsecureHelper(bluetoothDevice, UUID.fromString(uuid));
+							socket = connectInsecureHelper(
+									bluetoothDevice, 
+									UUID.fromString(uuid));
 						}
 					} catch (Exception e) {
 						logErr(e.toString() + " / " + e.getMessage());
-						callbackContext.error(e.getMessage());
+						callback_connect.error(e.getMessage());
 					}
-					if(bluetoothSocket != null) {
+					if(socket != null) {
 						logDbg("Connected");
-						m_bluetoothSockets.add(bluetoothSocket);
-						int socketId = m_bluetoothSockets.indexOf(bluetoothSocket);
-						callbackContext.sendPluginResult(
-								new PluginResult(PluginResult.Status.OK, socketId));
+						m_sockets.add(socket);
+						int socketId = m_sockets.indexOf(socket);
+						callback_connect.sendPluginResult(
+								new PluginResult(
+										PluginResult.Status.OK, socketId));
 					}
 					else {
-						callbackContext.error(0);
+						callback_connect.error(0);
 					}
 				}
 			});
+			PluginResult pluginResult = new PluginResult(
+					PluginResult.Status.NO_RESULT);
+			pluginResult.setKeepCallback(true);
+			callbackContext.sendPluginResult(pluginResult);
 			return true;
 		}
 		else if (ACTION_DISCONNECT.equals(action)) 
 		{
+			final int socketId = args.getInt(0);
 			try {
-				// Fetch socket & close it
-				BluetoothSocket socket = m_bluetoothSockets.get(args.getInt(0));
+				BluetoothSocket socket = m_sockets.get(socketId);
 				logDbg("Close socket");
 				socket.close();
-				// Remove socket from internal list
 				logDbg("Delete socket from list");
-				m_bluetoothSockets.remove(args.getInt(0));
-				// Everything went fine...
+				m_sockets.remove(socketId);
+				for (int i = 0; i < m_readThreads.size(); i++) {
+					if (m_readThreads.get(i).socketId == socketId) {
+						m_readThreads.remove(i);
+						break;
+					}
+				}
 				callbackContext.success();
 			} catch (Exception e) {
 				logErr(e.toString() + " / " + e.getMessage());
@@ -358,18 +379,22 @@ public class BluetoothPlugin extends CordovaPlugin {
 		}
 		else if ( ACTION_LISTEN.equals(action) )
 		{
+			final String name = args.getString(0);
+			final String uuid = args.getString(1);
+			final boolean secure = args.getBoolean(2);
 			this.callback_listen = callbackContext;
 			if (m_listenThread != null) {
 				m_listenThread.cancel();
 				m_listenThread = null;
 			}
 			m_listenThread = new ListenThread(
-					this.cordova, args.getString(0), 
-					UUID.fromString(args.getString(1)), 
-					args.getBoolean(2));
+					this.cordova, name, 
+					UUID.fromString(uuid), secure );
 			m_listenThread.start();
-			callbackContext.sendPluginResult(
-					new PluginResult(PluginResult.Status.NO_RESULT));
+			PluginResult pluginResult = new PluginResult(
+					PluginResult.Status.NO_RESULT);
+			pluginResult.setKeepCallback(true);
+			callbackContext.sendPluginResult(pluginResult);
 			return true;
 		}
 		else if ( ACTION_CANCEL_LISTENING.equals(action) )
@@ -383,33 +408,29 @@ public class BluetoothPlugin extends CordovaPlugin {
 		}
 		else if ( ACTION_READ.equals(action) ) 
 		{
-			try {
-				BluetoothSocket socket = m_bluetoothSockets.get(args.getInt(0));
-				InputStream inputStream = socket.getInputStream();
-				byte[] buffer = new byte[1024];
-				for (int i = 0; i < buffer.length; i++) {
-					// TODO : move to thread
-					buffer[i] = (byte) inputStream.read();
-				}
-				logDbg("Buffer: " + String.valueOf(buffer) );
-				callbackContext.success(String.valueOf(buffer));
-			} catch (Exception e) {
-				logErr(e.toString() + " / " + e.getMessage());
-				callbackContext.error(e.getMessage());
-			}
+			final int socketId = args.getInt(0);
+			this.callback_read = callbackContext;
+			m_readThreads.add(
+					new ReadThread(
+							m_sockets.get(socketId),
+							socketId));
+			PluginResult pluginResult = new PluginResult(
+					PluginResult.Status.NO_RESULT);
+			pluginResult.setKeepCallback(true);
+			callbackContext.sendPluginResult(pluginResult);
 			return true;
 		}
 		else if ( ACTION_WRITE.equals(action) )
 		{
+			final int socketId = args.getInt(0);
+			final JSONArray jsonArray = args.getJSONArray(1);
 			try {
-				BluetoothSocket socket = m_bluetoothSockets.get(args.getInt(0));
-				OutputStream outputStream = socket.getOutputStream();
-				JSONArray jsonArray = args.getJSONArray(1);
+				OutputStream outputStream = m_sockets.get(socketId)
+						.getOutputStream();
 				byte[] buffer = new byte[jsonArray.length()];				
 				for (int i = 0; i < jsonArray.length(); i++) {
 					buffer[i] = (byte) jsonArray.getInt(i);
 				}
-				// TODO : move to thread
 				outputStream.write(buffer);
 				callbackContext.success();
 			} catch (Exception e) {
@@ -606,7 +627,9 @@ public class BluetoothPlugin extends CordovaPlugin {
 					if (mm_serverSocket == null) {
 						String msg = "No ServerSocket !"; 
 						logErr(msg);
-						returnResult(new PluginResult(PluginResult.Status.ERROR, msg));
+						returnResult(
+								new PluginResult(
+										PluginResult.Status.ERROR, msg));
 						break;
 					}
 					bluetoothSocket = mm_serverSocket.accept();
@@ -614,14 +637,18 @@ public class BluetoothPlugin extends CordovaPlugin {
 					logErr(e.toString() + " / " + e.getMessage());
 				}
 				if (bluetoothSocket != null) {
-					m_bluetoothSockets.add(bluetoothSocket);
-					int socketId = m_bluetoothSockets.indexOf(bluetoothSocket);
-					returnResult(new PluginResult(PluginResult.Status.OK, socketId));
+					m_sockets.add(bluetoothSocket);
+					int socketId = m_sockets.indexOf(bluetoothSocket);
+					returnResult(
+							new PluginResult(
+									PluginResult.Status.OK, socketId));
 				}
 				else {
 					String msg = "Unable to open socket";
 					logErr(msg);
-					returnResult(new PluginResult(PluginResult.Status.ERROR, msg));
+					returnResult(
+							new PluginResult(
+									PluginResult.Status.ERROR, msg));
 				}
 			}
 			m_running = false;
@@ -650,7 +677,45 @@ public class BluetoothPlugin extends CordovaPlugin {
 		}
 	}
 	
-	
+	/**
+	 * CommThread to read and write to socket.
+	 * Auto shuts itself after a socket error.
+	 * @author huseyin
+	 */
+	private class ReadThread extends Thread {
+			private final InputStream mm_inputStream;
+			public final int socketId;
+			
+			public ReadThread(BluetoothSocket socket, int socketId) {
+				this.socketId = socketId;
+				InputStream in = null;
+				try {
+					in = socket.getInputStream();
+				} catch (IOException e) {
+					logErr("Cannot create read scokets");
+				}
+				mm_inputStream = in;
+			}
+			
+			@Override
+			public void run() {
+				while(true) {
+					try {
+						JSONArray ja = new JSONArray();
+						int available = mm_inputStream.available();
+						for (int i = 0; i < available; i++) {
+							ja.put(mm_inputStream.read());
+						}
+						callback_read.success(ja);
+					} catch (IOException e) {
+						/* socket disconnected */
+						logErr(e.toString() + " / " + e.getMessage());
+						callback_read.error(e.getMessage());
+						break;
+					}
+				}
+			}
+	}
 	
 	
 
