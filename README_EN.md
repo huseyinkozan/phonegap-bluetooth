@@ -1,6 +1,6 @@
 # Phonegap Bluetooth Plugin #
 
-Plugin for Phonegap (Cordova) 2.0
+Plugin for Phonegap (Cordova) 2.2.x
 
 This project was started as a fork of [BluetoothPlugin]. With this plugin, you can access 
 Bluetooth stack using javascript on Phonegap. After add some new functionality and 
