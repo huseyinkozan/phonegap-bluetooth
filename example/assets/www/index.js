@@ -29,10 +29,10 @@ function onload() {
     // onDeviceReady();
   }
   
-  disableBluetoothConnectionRelatedInputs(true);
+  disableBluetoothRelatedInputs(true);
   document.getElementById("listening-name").innerHTML = listeningName;
   document.getElementById("listening-uuid").innerHTML = listeningUUID;
-  
+  document.getElementById("connecting-uuid").innerHTML = listeningUUID;
   
 }
 
@@ -49,30 +49,30 @@ function onDeviceReady() {
 			  document.close();
 			  document.getElementById("enable-disable-button").disabled = true;
 			  document.getElementById("request-discoverable-button").disabled = true;
-			  disableBluetoothConnectionRelatedInputs(true);
+			  disableBluetoothRelatedInputs(true);
 		  }
 		  else {
 		    bluetoothPugin.isEnabled(
 		      function(enabled) {
 			      if (enabled) {
 			        document.getElementById("enable-disable-button").value = "Off";
-			        disableBluetoothConnectionRelatedInputs(false);
+			        disableBluetoothRelatedInputs(false);
 		        }
 		        else {
 			        document.getElementById("enable-disable-button").value = "On";
-			        disableBluetoothConnectionRelatedInputs(true);
+			        disableBluetoothRelatedInputs(true);
 		        }
 		      },
 		      function() {
 			      alert("Error while bluetooth enabled checking !");
-			      disableBluetoothConnectionRelatedInputs(true);
+			      disableBluetoothRelatedInputs(true);
 		      });
 		  }
 		},
 		function() {
 			alert("Error while bluetooth support checking !");
       document.getElementById("page-content").disabled = true;
-      disableBluetoothConnectionRelatedInputs(true);
+      disableBluetoothRelatedInputs(true);
 		});
 }
 
@@ -87,7 +87,7 @@ function requestDiscoverable(duration) {
 	bluetoothPugin.requestDiscoverable(
 		function(duration) {
       document.getElementById("enable-disable-button").value = "Off";
-      disableBluetoothConnectionRelatedInputs(false);
+      disableBluetoothRelatedInputs(false);
 			alert("Visible duration is " + duration + " seconds.");
 		},
 		function(error) {
@@ -110,12 +110,12 @@ function toggleEnableDisable(item) {
 	    bluetoothPugin.disable( function() {
 	      item.disabled = false;
         item.value = "On";
-        disableBluetoothConnectionRelatedInputs(true);
+        disableBluetoothRelatedInputs(true);
 		    alert( 'Disabling successfull' );
 	    }, function() {
 	      item.disabled = false;
         item.value = "Off";
-        disableBluetoothConnectionRelatedInputs(false);
+        disableBluetoothRelatedInputs(false);
 		    alert( 'Error disabling BT: ' + error );
 	    } );
     }
@@ -125,12 +125,12 @@ function toggleEnableDisable(item) {
 	    bluetoothPugin.enable( function() {
 	      item.disabled = false;
         item.value = "Off";
-        disableBluetoothConnectionRelatedInputs(false);
+        disableBluetoothRelatedInputs(false);
 		    alert( 'Enabling successfull' );
 	    }, function() {
 	      item.disabled = false;
         item.value = "On";
-        disableBluetoothConnectionRelatedInputs(true);
+        disableBluetoothRelatedInputs(true);
 		    alert( 'Error enabling BT: ' + error );
 	    } );
     }
@@ -291,15 +291,17 @@ function fetchUUIDs() {
     );
 }
 
+function disableConnectionRelatedInputs(disable) {
+	document.getElementById("message-text").disabled = disable;
+	document.getElementById("send-message-button").disabled = disable;
+}
+
 
 
 function disableUUIDRelatedInputs(disable) {
 
-  document.getElementById("connect-button").disabled = disable;
   if (disable)
-    document.getElementById("disconnect-button").disabled = disable;
-  document.getElementById("secure-connect-check").disabled = disable;
-  
+	  disableConnectionRelatedInputs(true);
 }
 
 
@@ -307,13 +309,17 @@ function disableBondRelatedInputs(disable) {
 
   document.getElementById("fetch-uuids-button").disabled = disable;
   document.getElementById("uuid-list").disabled = disable;
+  document.getElementById("connect-button").disabled = disable;
+  if (disable)
+    document.getElementById("disconnect-button").disabled = disable;
+  document.getElementById("secure-connect-check").disabled = disable;
   if (disable)
     disableUUIDRelatedInputs(true);
   
 }
 
 
-function disableBluetoothConnectionRelatedInputs(disable) {
+function disableBluetoothRelatedInputs(disable) {
 
   document.getElementById("address-button").disabled = disable;
   document.getElementById("name-button").disabled = disable;
@@ -325,7 +331,7 @@ function disableBluetoothConnectionRelatedInputs(disable) {
     disableBondRelatedInputs(true);
   document.getElementById("listen-button").disabled = disable;
   document.getElementById("secure-listen-check").disabled = disable;
-  
+  document.getElementById("listen-textarea").disabled = disable;
 }
 
 
@@ -341,7 +347,6 @@ function connect() {
     return;
 
   var bondedDeviceList = document.getElementById("bonded-device-list");
-  var uuidList = document.getElementById("uuid-list");
   var secureCheck = document.getElementById("secure-connect-check");
 
   bluetoothPugin.connect(
@@ -349,14 +354,16 @@ function connect() {
       socketId = sockId; 
       document.getElementById("disconnect-button").disabled = false;
       console.log( 'Socket-id: ' + socketId );
+      disableConnectionRelatedInputs(false);
       alert("Connected, Socket-id:" + socketId);
     }, 
     function(error) {
       document.getElementById("disconnect-button").disabled = true;
+      disableConnectionRelatedInputs(true);
       alert( 'Error: ' + error );
     }, 
     bondedDeviceList.options[bondedDeviceList.selectedIndex].value,
-    uuidList.options[uuidList.selectedIndex].value,
+    listeningUUID,
     secureCheck.checked
   );
 
@@ -378,6 +385,7 @@ function disconnect() {
     function(){
       alert("Disconnected");
       socketId = -1;
+      disableConnectionRelatedInputs(true);
     },
     function(error){
       alert("Error while disconnecting : " + error)
@@ -399,12 +407,20 @@ function toggleListen(item) {
         function(sockId){
           item.disabled = false;
           item.value = "Cancel";
-          alert("Connected socket:" + sockId);
+          document.getElementById("listen-textare").value = "Connected socket:" + sockId + "\n";
+          bluetoothPugin.read(
+      			function( p_data ) {
+      				document.getElementById("listen-textarea").value += "Data : >" + p_data + "<\n";
+      			},
+      			function( error ) {
+      				document.getElementById("listen-textarea").value += "Error : >" + error + "<\n";
+      			}, 
+      			sockId);
         },
         function(error){
           item.disabled = false;
           item.value = "Listen";
-          alert("Error while listening : " + error)
+          document.getElementById("listen-textare").value = "Error while listening : " + error + "\n";
         },
         listeningName,
         listeningUUID,
@@ -432,36 +448,34 @@ function toggleListen(item) {
 }
 
 
+function sendMessage() {
+	
+	if ( ! bluetoothPugin)
+	    return;
+	
+	if (socketId < 0)
+		  return;
+	
+	var d = document.getElementById("message-text").value;
+	var arr = new Array();
+	for (var i=0; i<d.length; ++i) {
+		arr[i] = d.charCodeAt(i);
+	}
+	jarr += "";
+	
+	
 
-function readDevice() {
-
-  if ( ! bluetoothPugin)
-    return;
-    
-	bluetoothPugin.read(
-			function( p_data ) {
-				$( '#bt-data-dump' ).html( p_data );
-			},
-			function( error ) {
-				alert( 'Error: ' + error );
-			}, 
-			socketId);
-}
-
-function writeDevice() {
-
-  if ( ! bluetoothPugin)
-    return;
-    
 	bluetoothPugin.write(
-			function(){
-				alert("Wrote");
+			function() {
+				alert("Successfully Sent");
 			}, function(error) {
-				alert( 'Error: ' + error );
-			}, 
+				alert( 'Error: ' + error + ', for : ' + arr );
+			},
 			socketId,
-			[10,20,30,40,50]);
+			arr
+	);
 }
+
 
 
 
