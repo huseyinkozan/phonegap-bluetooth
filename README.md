@@ -1,11 +1,8 @@
-# Phonegap Bluetooth Eklentisi #
+﻿# Phonegap Bluetooth Eklentisi #
 
 Projeyi geliştirmeyi durdurdum. Kodları referans olması için bırakıyorum.
 
-Phonegap (Cordova) 2.2.x için bir eklentidir.
-
 For English please see [README_EN.md].
-
 
 # Nasıl Kullanılır #
 Örnek projeye bakın : *assets/www/index.html*

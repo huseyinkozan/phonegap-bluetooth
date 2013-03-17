@@ -297,9 +297,11 @@ cordova.define("cordova/plugin/bluetooth", function(require, exports, module) {
    * failureCallback(message) : function to be called when there was a problem while \
    *                            reading or after socket has been closed.
    * socketId : connected socket id
+   * bufferSize : internal buffer size while reading, default is 1024
    */
-  Bluetooth.prototype.read = function(successCallback,failureCallback,socketId) {
-      return exec(successCallback, failureCallback, 'BluetoothPlugin', 'read', [socketId]);
+  Bluetooth.prototype.read = function(successCallback,failureCallback,socketId,bufferSize) {
+	  bufferSize = typeof bufferSize !== 'undefined' ? bufferSize : 1024;
+      return exec(successCallback, failureCallback, 'BluetoothPlugin', 'read', [socketId,bufferSize]);
   }
   
   /**

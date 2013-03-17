@@ -1,8 +1,6 @@
-# Phonegap Bluetooth Plugin #
+﻿# Phonegap Bluetooth Plugin #
 
 I have stopped development this plugin. The codes are here for reference.
-
-Plugin for Phonegap (Cordova) 2.2.x
 
 # How to Use #
 See example : *assets/www/index.html*

@@ -27,8 +27,10 @@ import org.apache.cordova.api.CordovaPlugin;
 import org.apache.cordova.api.PluginResult;
 import org.json.JSONArray;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -409,11 +411,12 @@ public class BluetoothPlugin extends CordovaPlugin {
 		else if ( ACTION_READ.equals(action) ) 
 		{
 			final int socketId = args.getInt(0);
+			final int bufferSize = args.getInt(1);
 			this.callback_read = callbackContext;
-			m_readThreads.add(
-					new ReadThread(
-							m_sockets.get(socketId),
-							socketId));
+			ReadThread readThread = new ReadThread(
+					m_sockets.get(socketId),socketId,bufferSize);
+			readThread.start();
+			m_readThreads.add(readThread);
 			PluginResult pluginResult = new PluginResult(
 					PluginResult.Status.NO_RESULT);
 			pluginResult.setKeepCallback(true);
@@ -593,7 +596,6 @@ public class BluetoothPlugin extends CordovaPlugin {
 	
 	/**
 	 * Listen Thread
-	 * @author hk
 	 */
 	private class ListenThread extends Thread {
 		private final BluetoothServerSocket mm_serverSocket;
@@ -680,33 +682,43 @@ public class BluetoothPlugin extends CordovaPlugin {
 	/**
 	 * CommThread to read and write to socket.
 	 * Auto shuts itself after a socket error.
-	 * @author huseyin
 	 */
 	private class ReadThread extends Thread {
-			private final InputStream mm_inputStream;
+			private final BufferedReader mm_bufferedReader;
 			public final int socketId;
+			public final int mm_bufferSize;
 			
-			public ReadThread(BluetoothSocket socket, int socketId) {
+			public ReadThread(BluetoothSocket socket, int socketId, int bufferSize) {
 				this.socketId = socketId;
+				mm_bufferSize = bufferSize;
 				InputStream in = null;
 				try {
 					in = socket.getInputStream();
 				} catch (IOException e) {
 					logErr("Cannot create read scokets");
 				}
-				mm_inputStream = in;
+				InputStreamReader isr = new InputStreamReader(in);
+				mm_bufferedReader = new BufferedReader(isr);
 			}
 			
 			@Override
 			public void run() {
+				logDbg("ReadThread::run()");
 				while(true) {
 					try {
-						JSONArray ja = new JSONArray();
-						int available = mm_inputStream.available();
-						for (int i = 0; i < available; i++) {
-							ja.put(mm_inputStream.read());
+						char[] buffer = new char [mm_bufferSize];
+						if (mm_bufferedReader.read(buffer) >= 0) {
+							JSONArray ja = new JSONArray();
+							// logDbg("read = " + buffer.toString());
+							for (int i = 0; i < buffer.length; i++) {
+								ja.put((int)buffer[i]);
+							}
+							// logDbg("ja = " + ja.toString());
+							PluginResult result = new PluginResult(
+									PluginResult.Status.OK, ja);
+							result.setKeepCallback(true);
+							callback_read.sendPluginResult(result);
 						}
-						callback_read.success(ja);
 					} catch (IOException e) {
 						/* socket disconnected */
 						logErr(e.toString() + " / " + e.getMessage());

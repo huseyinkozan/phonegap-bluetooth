@@ -407,10 +407,14 @@ function toggleListen(item) {
         function(sockId){
           item.disabled = false;
           item.value = "Cancel";
-          document.getElementById("listen-textare").value = "Connected socket:" + sockId + "\n";
+          document.getElementById("listen-textarea").value = "Connected socket:" + sockId + "\n";
           bluetoothPugin.read(
       			function( p_data ) {
-      				document.getElementById("listen-textarea").value += "Data : >" + p_data + "<\n";
+      				var str = "";
+      				for ( var i = 0; i < p_data.length; i++) {
+						str += String.fromCharCode(p_data[i]);
+					}
+      				document.getElementById("listen-textarea").value += "Data : >" + str + "<\n";
       			},
       			function( error ) {
       				document.getElementById("listen-textarea").value += "Error : >" + error + "<\n";
@@ -461,8 +465,8 @@ function sendMessage() {
 	for (var i=0; i<d.length; ++i) {
 		arr[i] = d.charCodeAt(i);
 	}
-	jarr += "";
-	
+	var newLine = "\n";
+	arr[arr.length] = newLine.charCodeAt(0);
 	
 
 	bluetoothPugin.write(
